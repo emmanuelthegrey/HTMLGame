@@ -5,52 +5,78 @@ var HEIGHT = 500;
 var WIDTH = 500;
 var message = 'Bouncing';
  
-//player
-var x = 50;
-var spdX = 30;
-var y = 40;
-var spdY = 5;
-var name = 'P';
+var player = {
+        x:50,
+        spdX:30,
+        y:40,
+        spdY:5,
+        name:'P',      
+};
  
-//enemy
-var enemy_x = 150;
-var enemy_spdX = 10;
-var enemy_y = 350;
-var enemy_spdY = 15;
-var enemy_name = 'E';
+var enemyList = {};
+ 
+Enemy('E1',150,350,10,15);
+Enemy('E2',250,350,10,-15);
+Enemy('E3',250,150,10,-8);
+ 
+ 
+function getDistanceBetweenEntity(entity1,entity2){     //return distance (number)
+        var vx = entity1.x - entity2.x;
+        var vy = entity1.y - entity2.y;
+        return Math.sqrt(vx*vx+vy*vy);
+}
+ 
+function testCollisionEntity(entity1,entity2){  //return if colliding (true/false)
+        var distance = getDistanceBetweenEntity(entity1,entity2);
+        return distance < 30;
+}
+ 
+function Enemy(id,x,y,spdX,spdY){
+        var genericEnemy = {
+                x:x,
+                spdX:spdX,
+                y:y,
+                spdY:spdY,
+                name:'E',
+                id:id,
+        };
+        enemyList[id] = genericEnemy;
+}
+ 
  
  
 setInterval(update,40);
  
+function updateEntity(something){
+        something.x += something.spdX;
+        something.y += something.spdY;
+        ctx.fillText(something.name,something.x,something.y);
+               
+               
+        if(something.x < 0 || something.x > WIDTH){
+                something.spdX = -something.spdX;
+        }
+        if(something.y < 0 || something.y > HEIGHT){
+                something.spdY = -something.spdY;
+        }
+}
+ 
+ 
 function update(){
         ctx.clearRect(0,0,WIDTH,HEIGHT);
-        //player
-        x += spdX;
-        y += spdY;
-        ctx.fillText(name,x,y);
+       
+        for(var key in enemyList){
+                updateEntity(enemyList[key]);
                
+                var isColliding = testCollisionEntity(player,enemyList[key]);
+                if(isColliding){
+                        console.log('Colliding!');
+                }
                
-        if(x < 0 || x > WIDTH){
-                console.log(message);
-                spdX = -spdX;
-        }
-        if(y < 0 || y > HEIGHT){
-                console.log(message);
-                spdY = -spdY;
         }
        
-        //enemy
-        enemy_x += enemy_spdX;
-        enemy_y += enemy_spdY;
-        ctx.fillText(enemy_name,enemy_x,enemy_y);
-               
-               
-        if(enemy_x < 0 || enemy_x > WIDTH){
-                console.log(message);
-                enemy_spdX = -enemy_spdX;
-        }
-        if(enemy_y < 0 || enemy_y > HEIGHT){
-                console.log(message);
-                enemy_spdY = -enemy_spdY;
-        }
+        updateEntity(player);
+       
+       
+       
 }
