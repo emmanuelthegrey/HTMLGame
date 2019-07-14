@@ -19,6 +19,8 @@ var player = {
         width:20,
         height:20,
         color:'green',
+        //
+        atkSpd:1,
 };
  
 var enemyList = {};
@@ -78,7 +80,7 @@ randomlyGenerateEnemy = function(){
 }
  
  
-Upgrade = function (id,x,y,spdX,spdY,width,height){
+Upgrade = function (id,x,y,spdX,spdY,width,height,category,color){
         var asd = {
                 x:x,
                 spdX:spdX,
@@ -88,7 +90,9 @@ Upgrade = function (id,x,y,spdX,spdY,width,height){
                 id:id,
                 width:width,
                 height:height,
-                color:'purple',
+                color:color,
+                //
+                category:category,
         };
         upgradeList[id] = asd;
 }
@@ -102,7 +106,16 @@ randomlyGenerateUpgrade = function(){
         var id = Math.random();
         var spdX = 0;
         var spdY = 0;
-        Upgrade(id,x,y,spdX,spdY,width,height);
+       
+        if(Math.random()<0.5){
+                var category = 'score';
+                var color = 'orange';
+        } else {
+                var category = 'atkSpd';
+                var color = 'purple';
+        }
+       
+        Upgrade(id,x,y,spdX,spdY,width,height,category,color);
 }
  
 Bullet = function (id,x,y,spdX,spdY,width,height){
@@ -116,6 +129,8 @@ Bullet = function (id,x,y,spdX,spdY,width,height){
                 width:width,
                 height:height,
                 color:'black',
+                //
+                timer:0,
         };
         bulletList[id] = asd;
 }
@@ -200,19 +215,40 @@ update = function(){
         if(frameCount % 75 === 0)       //every 3 sec
                 randomlyGenerateUpgrade();
  
-        if(frameCount % 25 === 0)       //every 1 sec
+        if(frameCount % Math.round(25/player.atkSpd) === 0)     //every 1 sec
                 randomlyGenerateBullet();
  
        
         for(var key in bulletList){
                 updateEntity(bulletList[key]);
+               
+                var toRemove = false;
+                bulletList[key].timer++;
+                if(bulletList[key].timer > 75){
+                        toRemove = true;
+                }
+               
+                for(var key2 in enemyList){
+                        var isColliding = testCollisionEntity(bulletList[key],enemyList[key2]);
+                        if(isColliding){
+                                toRemove = true;
+                                delete enemyList[key2];
+                                break;
+                        }                      
+                }
+                if(toRemove){
+                        delete bulletList[key];
+                }
         }
        
         for(var key in upgradeList){
                 updateEntity(upgradeList[key]);
                 var isColliding = testCollisionEntity(player,upgradeList[key]);
                 if(isColliding){
-                        score += 1000;
+                        if(upgradeList[key].category === 'score')
+                                score += 1000;
+                        if(upgradeList[key].category === 'atkSpd')
+                                player.atkSpd += 3;
                         delete upgradeList[key];
                 }
         }
@@ -242,6 +278,7 @@ startNewGame = function(){
         score = 0;
         enemyList = {};
         upgradeList = {};
+        bulletList = {};
         randomlyGenerateEnemy();
         randomlyGenerateEnemy();
         randomlyGenerateEnemy();
@@ -254,5 +291,3 @@ startNewGame = function(){
 startNewGame();
  
 setInterval(update,40);
- 
- 
