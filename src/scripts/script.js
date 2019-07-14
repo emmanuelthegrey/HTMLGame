@@ -74,6 +74,7 @@ document.onkeyup = function(event){
 
 update = function(){
 	ctx.clearRect(0,0,WIDTH,HEIGHT);
+	drawMap();
 	frameCount++;
 	score++;
 	
@@ -159,3 +160,10 @@ player = Player();
 startNewGame();
 
 setInterval(update,40);
+
+
+drawMap = function(){
+	var x = WIDTH/2 - player.x;
+	var y = HEIGHT/2 - player.y;
+	ctx.drawImage(Img.map,0,0,Img.map.width,Img.map.height,x,y,Img.map.width*2,Img.map.height*2);
+}
