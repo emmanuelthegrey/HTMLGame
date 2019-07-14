@@ -26,6 +26,7 @@ var player = {
         pressingUp:false,
         pressingLeft:false,
         pressingRight:false,
+        aimAngle:0,
 };
  
 var enemyList = {};
@@ -139,7 +140,7 @@ Bullet = function (id,x,y,spdX,spdY,width,height){
         bulletList[id] = asd;
 }
  
-randomlyGenerateBullet = function(){
+randomlyGenerateBullet = function(actor,aimOverwrite){
         //Math.random() returns a number between 0 and 1
         var x = player.x;
         var y = player.y;
@@ -147,9 +148,13 @@ randomlyGenerateBullet = function(){
         var width = 10;
         var id = Math.random();
        
-        var angle = Math.random()*360;
-        var spdX = Math.cos(angle/180*Math.PI)*5;
-        var spdY = Math.sin(angle/180*Math.PI)*5;
+        var angle;
+        if(aimOverwrite !== undefined)
+                angle = aimOverwrite;
+        else angle = actor.aimAngle;
+       
+        var spdX = Math.cos(angle/180*Math.PI)*20;
+        var spdY = Math.sin(angle/180*Math.PI)*20;
         Bullet(id,x,y,spdX,spdY,width,height);
 }
  
@@ -186,28 +191,33 @@ drawEntity = function(something){
  
 document.onclick = function(mouse){
         if(player.attackCounter > 25){  //every 1 sec
-                randomlyGenerateBullet();
                 player.attackCounter = 0;
+                randomlyGenerateBullet(player);
         }
+}
+document.oncontextmenu = function(mouse){
+        if(player.attackCounter > 50){  //every 1 sec
+                player.attackCounter = 0;
+                /*
+                for(var i = 0 ; i < 360; i++){
+                        randomlyGenerateBullet(player,i);
+                }
+                */
+                randomlyGenerateBullet(player,player.aimAngle - 5);
+                randomlyGenerateBullet(player,player.aimAngle);
+                randomlyGenerateBullet(player,player.aimAngle + 5);
+        }
+        mouse.preventDefault();
 }
  
 document.onmousemove = function(mouse){
-        /*
         var mouseX = mouse.clientX - document.getElementById('ctx').getBoundingClientRect().left;
         var mouseY = mouse.clientY - document.getElementById('ctx').getBoundingClientRect().top;
        
-        if(mouseX < player.width/2)
-                mouseX = player.width/2;
-        if(mouseX > WIDTH-player.width/2)
-                mouseX = WIDTH - player.width/2;
-        if(mouseY < player.height/2)
-                mouseY = player.height/2;
-        if(mouseY > HEIGHT - player.height/2)
-                mouseY = HEIGHT - player.height/2;
+        mouseX -= player.x;
+        mouseY -= player.y;
        
-        player.x = mouseX;
-        player.y = mouseY;
-        */
+        player.aimAngle = Math.atan2(mouseY,mouseX) / Math.PI * 180;
 }
  
 document.onkeydown = function(event){
@@ -243,12 +253,12 @@ updatePlayerPosition = function(){
                 player.y -= 10;
        
         //ispositionvalid
-        // if(player.x < player.width/2)
-        //         player.x = player.width/2;
+        if(player.x < player.width/2)
+                player.x = player.width/2;
         if(player.x > WIDTH-player.width/2)
                 player.x = WIDTH - player.width/2;
-        // if(player.y < player.height/2)
-        //         player.y = player.height/2;
+        if(player.y < player.height/2)
+                player.y = player.height/2;
         if(player.y > HEIGHT - player.height/2)
                 player.y = HEIGHT - player.height/2;
        
