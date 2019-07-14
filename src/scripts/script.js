@@ -5,6 +5,10 @@ var HEIGHT = 500;
 var WIDTH = 500;
 var timeWhenGameStarted = Date.now();   //return time in ms
  
+var frameCount = 0;
+ 
+var score = 0;
+ 
 var player = {
         x:50,
         spdX:30,
@@ -18,7 +22,8 @@ var player = {
 };
  
 var enemyList = {};
- 
+var upgradeList = {};
+var bulletList = {};
  
 getDistanceBetweenEntity = function (entity1,entity2){  //return distance (number)
         var vx = entity1.x - entity2.x;
@@ -59,9 +64,89 @@ Enemy = function (id,x,y,spdX,spdY,width,height){
        
 }
  
+randomlyGenerateEnemy = function(){
+        //Math.random() returns a number between 0 and 1
+        var x = Math.random()*WIDTH;
+        var y = Math.random()*HEIGHT;
+        var height = 10 + Math.random()*30;     //between 10 and 40
+        var width = 10 + Math.random()*30;
+        var id = Math.random();
+        var spdX = 5 + Math.random() * 5;
+        var spdY = 5 + Math.random() * 5;
+        Enemy(id,x,y,spdX,spdY,width,height);
+       
+}
+ 
+ 
+Upgrade = function (id,x,y,spdX,spdY,width,height){
+        var asd = {
+                x:x,
+                spdX:spdX,
+                y:y,
+                spdY:spdY,
+                name:'E',
+                id:id,
+                width:width,
+                height:height,
+                color:'purple',
+        };
+        upgradeList[id] = asd;
+}
+ 
+randomlyGenerateUpgrade = function(){
+        //Math.random() returns a number between 0 and 1
+        var x = Math.random()*WIDTH;
+        var y = Math.random()*HEIGHT;
+        var height = 10;
+        var width = 10;
+        var id = Math.random();
+        var spdX = 0;
+        var spdY = 0;
+        Upgrade(id,x,y,spdX,spdY,width,height);
+}
+ 
+Bullet = function (id,x,y,spdX,spdY,width,height){
+        var asd = {
+                x:x,
+                spdX:spdX,
+                y:y,
+                spdY:spdY,
+                name:'E',
+                id:id,
+                width:width,
+                height:height,
+                color:'black',
+        };
+        bulletList[id] = asd;
+}
+ 
+randomlyGenerateBullet = function(){
+        //Math.random() returns a number between 0 and 1
+        var x = player.x;
+        var y = player.y;
+        var height = 10;
+        var width = 10;
+        var id = Math.random();
+       
+        var angle = Math.random()*360;
+        var spdX = Math.cos(angle/180*Math.PI)*5;
+        var spdY = Math.sin(angle/180*Math.PI)*5;
+        Bullet(id,x,y,spdX,spdY,width,height);
+}
+ 
+ 
 document.onmousemove = function(mouse){
-        var mouseX = mouse.clientX;
-        var mouseY = mouse.clientY;
+        var mouseX = mouse.clientX - document.getElementById('ctx').getBoundingClientRect().left;
+        var mouseY = mouse.clientY - document.getElementById('ctx').getBoundingClientRect().top;
+       
+        if(mouseX < player.width/2)
+                mouseX = player.width/2;
+        if(mouseX > WIDTH-player.width/2)
+                mouseX = WIDTH - player.width/2;
+        if(mouseY < player.height/2)
+                mouseY = player.height/2;
+        if(mouseY > HEIGHT - player.height/2)
+                mouseY = HEIGHT - player.height/2;
        
         player.x = mouseX;
         player.y = mouseY;
@@ -106,6 +191,31 @@ drawEntity = function(something){
  
 update = function(){
         ctx.clearRect(0,0,WIDTH,HEIGHT);
+        frameCount++;
+        score++;
+       
+        if(frameCount % 100 === 0)      //every 4 sec
+                randomlyGenerateEnemy();
+ 
+        if(frameCount % 75 === 0)       //every 3 sec
+                randomlyGenerateUpgrade();
+ 
+        if(frameCount % 25 === 0)       //every 1 sec
+                randomlyGenerateBullet();
+ 
+       
+        for(var key in bulletList){
+                updateEntity(bulletList[key]);
+        }
+       
+        for(var key in upgradeList){
+                updateEntity(upgradeList[key]);
+                var isColliding = testCollisionEntity(player,upgradeList[key]);
+                if(isColliding){
+                        score += 1000;
+                        delete upgradeList[key];
+                }
+        }
        
         for(var key in enemyList){
                 updateEntity(enemyList[key]);
@@ -113,24 +223,36 @@ update = function(){
                 var isColliding = testCollisionEntity(player,enemyList[key]);
                 if(isColliding){
                         player.hp = player.hp - 1;
-                        if(player.hp <= 0){
-                                var timeSurvived = Date.now() - timeWhenGameStarted;
-                               
-                                console.log("You lost! You survived for " + timeSurvived + " ms.");
-                                timeWhenGameStarted = Date.now();
-                                player.hp = 10;
-                        }
                 }
-               
         }
-       
+        if(player.hp <= 0){
+                var timeSurvived = Date.now() - timeWhenGameStarted;           
+                console.log("You lost! You survived for " + timeSurvived + " ms.");            
+                startNewGame();
+        }
+                       
         drawEntity(player);
         ctx.fillText(player.hp + " Hp",0,30);
+        ctx.fillText('Score: ' + score,200,30);
+}
+startNewGame = function(){
+        player.hp = 10;
+        timeWhenGameStarted = Date.now();
+        frameCount = 0;
+        score = 0;
+        enemyList = {};
+        upgradeList = {};
+        randomlyGenerateEnemy();
+        randomlyGenerateEnemy();
+        randomlyGenerateEnemy();
+       
 }
  
-Enemy('E1',150,350,10,15,30,30);
-Enemy('E2',250,350,10,-15,20,20);
-Enemy('E3',250,150,10,-8,40,10);
  
+ 
+ 
+startNewGame();
  
 setInterval(update,40);
+ 
+ 
